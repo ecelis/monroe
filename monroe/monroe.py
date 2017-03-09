@@ -3,6 +3,7 @@ import sys
 import logging
 
 import cpuinfo
+import vlc
 
 
 if "X86_64" == cpuinfo.get_cpu_info()["arch"]:
@@ -30,10 +31,9 @@ def main():
             sys.exit(0)
 
 
-
 def exit(flag):
     """Exit the app"""
-    if flag == True:
+    if flag:
         logging.info("Bye!")
         sys.exit(0)
 
@@ -42,6 +42,10 @@ def log_init():
     """Initialize log"""
     logging.basicConfig(filename="monroe.log", level=logging.DEBUG)
 
+
+def play(audio):
+    p = vlc.MediaPlayer(audio)
+    p.play()
 
 if __name__ == "__main__":
     main()
