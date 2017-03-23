@@ -1,3 +1,7 @@
+## I got the code from https://github.com/shantnu/Webcam-Face-Detect
+## I assume license is BSD, MIT or alike, anyways no code modifications
+## beyond this notice
+
 import cv2
 import sys
 
