@@ -15,6 +15,8 @@ if "X86_64" == cpuinfo.get_cpu_info()["arch"]:
 config = ConfigParser.ConfigParser()
 face_cascade = None
 video = None
+vlc_instance = None
+player = None
 stay_alive = True   # Keep the program running?
 speaking = False    # Am I talking when I detect someone else prescence
 
@@ -22,11 +24,22 @@ speaking = False    # Am I talking when I detect someone else prescence
 def initialize():
     """Initialize program"""
     global video
+    global vlc_instance
+    global player
     global face_cascade
     config.readfp(open('../config.ini'))
     face_cascade = cv2.CascadeClassifier("../"
             + config.get('DEFAULT','facexml'))
     video = cv2.VideoCapture(0)
+    # Create basic VLC instance
+    vlc_instance = vlc.Instance()
+    # Create VLC player
+    player = vlc_instance.media_player_new()
+    # TODO Make it load a playlist and set it up to play random
+    promos = vlc_instance.media_new("file://"
+            + os.environ["HOME"] + "/01.ogg")
+    player.set_media(promos)
+
 
 def get_frame():
     """Capture frames from camera"""
@@ -45,7 +58,6 @@ def get_frame():
     for (x, y, w, h) in faces:
        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
-    #cv2.imshow('Video', frame)
     return frame
 
 
@@ -57,19 +69,34 @@ def jpeg_encode(frame):
 
 def main():
     """Monroe waits for external sensors input and greet people"""
-
+    global stay_alive
     log_init()                      # Initialize loging system
     logging.info("Starting")
     initialize()                    # Initilize global variables
-    read = interface.read_input()
+    #read = interface.read_input() TODO replace it for something else
 
     while stay_alive:
         # Feel
         # Watch
         cv2.imshow('Video', get_frame())
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        # Wait for input, TODO make it more generic loose from cv2
+        r_input = cv2.waitKey(1) & 0xFF
+        if r_input == ord('q'):
+            stay_alive = False
             exit(stay_alive)
             break
+        elif r_input == ord('1'):
+            shout_out()
+
+
+def shout_out(snd_file=None):
+    """Say something"""
+    if (snd_file != None):
+        speech = vlc_instance.media_new(snd_file)
+        player.set_media(speech)
+
+    player.play()
+
 
 def exit(flag):
     """Exit the app"""
