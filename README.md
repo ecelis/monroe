@@ -32,6 +32,7 @@ with monroe source code.
 
 ### Run
 
+    python monroe.py
 
     python monroe.py | cvlc --demux=rawvideo --rawvid-fps=25 \
       --rawvid-width=720 --rawvid-height=480  \

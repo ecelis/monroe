@@ -5,6 +5,7 @@ import ConfigParser
 
 import cpuinfo
 import cv2
+from flask import Flask
 import pyttsx
 import vlc
 
@@ -14,9 +15,7 @@ if "X86_64" == cpuinfo.get_cpu_info()["arch"]:
 
 
 config = ConfigParser.ConfigParser()
-tts_engine = pyttsx.init()
-tts_engine.setProperty('voice', 'spanish-latin-am')
-tts_engine.setProperty('rate', 95)
+tts_engine = None
 face_cascade = None
 video = None
 vlc_instance = None
@@ -29,8 +28,14 @@ def initialize():
     """Initialize program"""
     global video
     global vlc_instance
+    global tts_engine
     global player
     global face_cascade
+
+    tts_engine = pyttsx.init()
+    tts_engine.setProperty('voice', 'spanish-latin-am')
+    tts_engine.setProperty('rate', 95)
+
     config.readfp(open('../config.ini'))
     face_cascade = cv2.CascadeClassifier("../"
             + config.get('DEFAULT','facexml'))
@@ -141,7 +146,6 @@ def log_init():
     logging.basicConfig(filename = os.environ['HOME'] + "/monroe.log",
             level=logging.DEBUG,
             format=FORMAT)
-
 
 
 
