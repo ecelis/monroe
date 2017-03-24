@@ -85,11 +85,6 @@ def log_init():
     logging.basicConfig(filename="monroe.log", level=logging.DEBUG)
 
 
-def play(audio):
-    logging.info(audio)
-    player = vlc.MediaPlayer(audio)
-    player.play()
-
 
 
 if __name__ == "__main__":
