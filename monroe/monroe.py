@@ -92,13 +92,21 @@ def main():
         elif r_input == ord('1'):
             shout_out()
         elif r_input == ord('2'):
-            tts_engine.say("Hola mundo!")
-            tts_engine.runAndWait()
+            if False == amIspeaking():
+                tts_engine.say("Hola mundo!")
+                tts_engine.runAndWait()
 
+def amIspeaking():
+    global speaking
+    if speaking == True:
+        return speaking
+    else:
+        speaking = True
+        return False
 
 def shout_out(snd_file=None):
     """Say something"""
-    if amIspeaking() == False:
+    if False == amIspeaking():
         if (snd_file != None):
             speech = vlc_instance.media_new(snd_file)
             player.set_media(speech)
