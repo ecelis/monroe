@@ -5,6 +5,7 @@ import ConfigParser
 
 import cpuinfo
 import cv2
+import pyttsx
 import vlc
 
 
@@ -13,6 +14,9 @@ if "X86_64" == cpuinfo.get_cpu_info()["arch"]:
 
 
 config = ConfigParser.ConfigParser()
+tts_engine = pyttsx.init()
+tts_engine.setProperty('voice', 'spanish-latin-am')
+tts_engine.setProperty('rate', 95)
 face_cascade = None
 video = None
 vlc_instance = None
