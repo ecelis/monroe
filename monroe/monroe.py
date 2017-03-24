@@ -45,8 +45,8 @@ def get_frame():
     for (x, y, w, h) in faces:
        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
-    cv2.imshow('Video', frame)
-    #return frame
+    #cv2.imshow('Video', frame)
+    return frame
 
 
 def jpeg_encode(frame):
@@ -66,7 +66,9 @@ def main():
     while stay_alive:
         # Feel
         # Watch
-        get_frame()
+        #get_frame()
+        sys.stdout.write(get_frame().tostring())
+        #cv2.imshow('Video', get_frame())
         if cv2.waitKey(1) & 0xFF == ord('q'):
             exit(stay_alive)
             break
