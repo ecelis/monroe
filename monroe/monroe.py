@@ -137,8 +137,8 @@ def exit(flag):
 
 def log_init():
     """Initialize log"""
-    FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
-    logging.basicConfig(filename = os.environ['HOME'] + "monroe.log",
+    FORMAT = '%(asctime)-15s %(message)s'
+    logging.basicConfig(filename = os.environ['HOME'] + "/monroe.log",
             level=logging.DEBUG,
             format=FORMAT)
 
