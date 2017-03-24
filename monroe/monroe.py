@@ -66,9 +66,7 @@ def main():
     while stay_alive:
         # Feel
         # Watch
-        #get_frame()
-        sys.stdout.write(get_frame().tostring())
-        #cv2.imshow('Video', get_frame())
+        cv2.imshow('Video', get_frame())
         if cv2.waitKey(1) & 0xFF == ord('q'):
             exit(stay_alive)
             break
