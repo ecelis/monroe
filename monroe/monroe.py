@@ -85,21 +85,26 @@ def main():
         cv2.imshow('Video', get_frame())
         # Wait for input, TODO make it more generic loose from cv2
         r_input = cv2.waitKey(1) & 0xFF
-        if r_input == ord('q'):
+        if r_input == ord('/'):
             stay_alive = False
             exit(stay_alive)
             break
         elif r_input == ord('1'):
             shout_out()
+        elif r_input == ord('2'):
+            tts_engine.say("Hola mundo!")
+            tts_engine.runAndWait()
 
 
 def shout_out(snd_file=None):
     """Say something"""
-    if (snd_file != None):
-        speech = vlc_instance.media_new(snd_file)
-        player.set_media(speech)
+    if amIspeaking() == False:
+        if (snd_file != None):
+            speech = vlc_instance.media_new(snd_file)
+            player.set_media(speech)
 
-    player.play()
+        player.play()
+        speaking = False
 
 
 def exit(flag):
