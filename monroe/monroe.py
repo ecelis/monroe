@@ -73,6 +73,7 @@ def jpeg_encode(frame):
 
 def main():
     """Monroe waits for external sensors input and greet people"""
+    global speaking
     global stay_alive
     log_init()                      # Initialize loging system
     logging.info("Starting")
@@ -89,16 +90,26 @@ def main():
             stay_alive = False
             exit(stay_alive)
             break
+        elif r_input == ord('.'):
+            logging.info("Shut up!")
+            tts_engine.stop()
+            player.stop()
+            speaking = False
         elif r_input == ord('1'):
+            logging.info("Shout out!")
             shout_out()
         elif r_input == ord('2'):
+            logging.info("Say something")
             if False == amIspeaking():
                 tts_engine.say("Hola mundo!")
                 tts_engine.runAndWait()
+                speaking = False
+
 
 def amIspeaking():
     global speaking
     if speaking == True:
+        logging.info("I'am currently talking")
         return speaking
     else:
         speaking = True
