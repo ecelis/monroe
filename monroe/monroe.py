@@ -1,20 +1,21 @@
-import os
-import sys
+import configparser
 import logging
-import ConfigParser
+import os
+from pathlib import Path
+import sys
 
-import cpuinfo
+from cpuinfo import get_cpu_info
 import cv2
 from flask import Flask
-import pyttsx
+import pyttsx3
 import vlc
 
 
-if "X86_64" == cpuinfo.get_cpu_info()["arch"]:
+if "X86_64" == get_cpu_info()["arch"]:
     import getchar as interface
 
 
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 tts_engine = None
 face_cascade = None
 video = None
@@ -32,40 +33,50 @@ def initialize():
     global player
     global face_cascade
 
-    tts_engine = pyttsx.init()
+    base_path = Path(__file__).parent
+    config.read((base_path / '../config.ini').resolve())
+    
+    ## Initialize Text-to-Speech engine
+    tts_engine = pyttsx3.init()
     tts_engine.setProperty('voice', 'spanish-latin-am')
     tts_engine.setProperty('rate', 95)
 
-    config.readfp(open('../config.ini'))
-    face_cascade = cv2.CascadeClassifier("../"
-            + config.get('DEFAULT','facexml'))
+    ## Initialize camera
     video = cv2.VideoCapture(0)
+    
+    face_cascade = cv2.CascadeClassifier("../"
+        + config.get('DEFAULT', 'facexml'))
     # Create basic VLC instance
     vlc_instance = vlc.Instance()
     # Create VLC player
     player = vlc_instance.media_player_new()
     # TODO Make it load a playlist and set it up to play random
     promos = vlc_instance.media_new("file://"
-            + os.environ["HOME"] + "/01.ogg")
+                                    + os.environ["HOME"] + "/01.ogg")
     player.set_media(promos)
 
 
 def get_frame():
     """Capture frames from camera"""
-    success, frame = video.read()
+    if video.isOpened():
+        success, frame = video.read()
+    else:
+        success = False
+        stay_alive = success  ## TODO maybe stay_aliv isn't required
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     faces = face_cascade.detectMultiScale(
-            gray,
-            scaleFactor=1.1,
-            minNeighbors=5,
-            minSize=(30, 30),
-            flags=cv2.cv.CV_HAAR_SCALE_IMAGE
-            )
+        gray,
+        scaleFactor=1.1,
+        minNeighbors=5,
+        minSize=(30, 30),
+        ## TODO research where this is  nowflags=cv2.cv.CV_HAAR_SCALE_IMAGE
+    )
 
-    ## Draw a rectangle around faces
+    # Draw a rectangle around faces
     for (x, y, w, h) in faces:
-       cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
     return frame
 
@@ -83,7 +94,7 @@ def main():
     log_init()                      # Initialize loging system
     logging.info("Starting")
     initialize()                    # Initilize global variables
-    #read = interface.read_input() TODO replace it for something else
+    # read = interface.read_input() TODO replace it for something else
 
     while stay_alive:
         # Feel
@@ -120,6 +131,7 @@ def amIspeaking():
         speaking = True
         return False
 
+
 def shout_out(snd_file=None):
     """Say something"""
     if False == amIspeaking():
@@ -143,10 +155,9 @@ def exit(flag):
 def log_init():
     """Initialize log"""
     FORMAT = '%(asctime)-15s %(message)s'
-    logging.basicConfig(filename = os.environ['HOME'] + "/monroe.log",
-            level=logging.DEBUG,
-            format=FORMAT)
-
+    logging.basicConfig(filename=os.environ['HOME'] + "/monroe.log",
+                        level=logging.DEBUG,
+                        format=FORMAT)
 
 
 if __name__ == "__main__":

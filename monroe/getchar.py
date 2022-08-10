@@ -1,4 +1,3 @@
-
 class _GetchUnix:
     def __init__(self):
         import tty, sys
@@ -25,7 +24,7 @@ class read_input:
             self.impl = _GetchUnix()
 
     def __call__(self):
-	return self.impl()
+        return self.impl()
 
 
 """ Maybe I'll never use the windows class, but still useful to get it
@@ -38,4 +37,3 @@ class _GetchWindows:
     def __call__(self):
         import msvcrt
         return msvcrt.getch()
-
