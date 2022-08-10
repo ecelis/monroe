@@ -8,10 +8,28 @@ Certain files are required. In a linux/mac system make sure to have teh followin
 
 It configures which camera and the XML for the model for face detection.
 
-```
+- **camera** if you have more than one camera connected, change the index. Right
+  now it is trial and error to find out.
+- **voice** pyttysx3 voices, run the snippet below to find out which voices are
+  available in your system.
+- **facexml**, probably you won't need to change it. Face Cascade Clasification
+  model
+
+```ini
 [DEFAULT]
-facexml=haarcascade_frontalface_default.xml
 camera=0
+voice=spanish-latin-am
+facexml=haarcascade_frontalface_default.xml
+```
+
+Get available voices in `pyttsx3`
+
+```python
+import pyttsx3
+engine = pyttsx3.init()
+voices = engine.getProperty('voices')
+for voice in voices:
+  print(voice.id)
 ```
 
 ## Run
@@ -23,7 +41,7 @@ conda create --name monroe
 conda activate monroe
 conda install --file conda-requirements.txt
 pip install -r requirements.txt
-cd monroe/monroe
+cd monroe/src/monroe
 python monroe.py
 ```
 

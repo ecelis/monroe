@@ -65,21 +65,22 @@ def initialize():
 
     ## Initialize Text-to-Speech engine
     tts_engine = pyttsx3.init()
-    tts_engine.setProperty('voice', 'spanish-latin-am')
+    tts_engine.setProperty('voice',
+        config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
     tts_engine.setProperty('rate', 95)
 
     ## Initialize camera
     video = cv2.VideoCapture(0)
     
-    
-    # Create basic VLC instance
-    vlc_instance = vlc.Instance()
-    # Create VLC player
-    player = vlc_instance.media_player_new()
-    # TODO Make it load a playlist and set it up to play random
-    promos = vlc_instance.media_new("file://"
-                                    + os.environ["HOME"] + "/01.ogg")
-    player.set_media(promos)
+    # TODO I can't recall why I wanted VLC
+    # # Create basic VLC instance
+    # vlc_instance = vlc.Instance()
+    # # Create VLC player
+    # player = vlc_instance.media_player_new()
+    # # TODO Make it load a playlist and set it up to play random
+    # promos = vlc_instance.media_new("file://"
+    #                                 + os.environ["HOME"] + "/01.ogg")
+    # player.set_media(promos)
 
 
 def get_frame():
@@ -141,7 +142,7 @@ def main():
             speaking = False
         elif r_input == ord('1'):
             logging.info("Shout out!")
-            shout_out()
+            #shout_out()
         elif r_input == ord('2'):
             logging.info("Say something")
             if False == amIspeaking():
@@ -160,15 +161,15 @@ def amIspeaking():
         return False
 
 
-def shout_out(snd_file=None):
-    """Say something"""
-    if False == amIspeaking():
-        if (snd_file != None):
-            speech = vlc_instance.media_new(snd_file)
-            player.set_media(speech)
+# def shout_out(snd_file=None):
+#     """Say something"""
+#     if False == amIspeaking():
+#         if (snd_file != None):
+#             speech = vlc_instance.media_new(snd_file)
+#             player.set_media(speech)
 
-        player.play()
-        speaking = False
+#         player.play()
+#         speaking = False
 
 
 def exit(flag):
