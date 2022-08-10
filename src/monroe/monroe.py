@@ -1,3 +1,18 @@
+"""
+Copyright 2017 - 2022 Ernesto Angel Celis de la Fuente
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License."""
+
 import configparser
 import logging
 import os
@@ -9,14 +24,13 @@ import cv2
 import pyttsx3
 import vlc
 
-
-if "X86_64" == get_cpu_info()["arch"]:
+if "X86_64" == get_cpu_info()["arch"]:  ## TODO I can't recall why I needed it
     import getchar as interface
 
 
 config = configparser.ConfigParser()
 tts_engine = None
-face_cascade = None
+face_cc = None
 video = None
 vlc_instance = None
 player = None
@@ -30,11 +44,25 @@ def initialize():
     global vlc_instance
     global tts_engine
     global player
-    global face_cascade
+    global face_cc
 
-    base_path = Path(__file__).parent
-    config.read((base_path / '../config.ini').resolve())
+    ## Initialize ~/.config/monroe
+    config_dir = str(Path.home().joinpath('.config', 'monroe'))
+    os.makedirs(config_dir, exist_ok=True)
+    config_file = Path.home().joinpath(config_dir, 'config.ini')
+    config_list = config.read(config_file)
     
+    ## Check for the required files to be in place
+    if len(config_list) < 1:
+        raise Exception("File %s not found." % config_file)
+    face_cc_xml = str(Path.home().joinpath(config_dir,
+        config.get('DEFAULT', 'facexml')))
+    if(not Path(face_cc_xml).is_file()):
+        raise FileNotFoundError("File %s not found!" % face_cc_xml)
+
+    ## Load the Face Cascade Classifier model
+    face_cc = cv2.CascadeClassifier(face_cc_xml)
+
     ## Initialize Text-to-Speech engine
     tts_engine = pyttsx3.init()
     tts_engine.setProperty('voice', 'spanish-latin-am')
@@ -43,8 +71,7 @@ def initialize():
     ## Initialize camera
     video = cv2.VideoCapture(0)
     
-    face_cascade = cv2.CascadeClassifier("../"
-        + config.get('DEFAULT', 'facexml'))
+    
     # Create basic VLC instance
     vlc_instance = vlc.Instance()
     # Create VLC player
@@ -65,17 +92,19 @@ def get_frame():
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    faces = face_cascade.detectMultiScale(
-        gray,
-        scaleFactor=1.1,
-        minNeighbors=5,
-        minSize=(30, 30),
-        ## TODO research where this is  nowflags=cv2.cv.CV_HAAR_SCALE_IMAGE
-    )
-
-    # Draw a rectangle around faces
-    for (x, y, w, h) in faces:
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    try:
+        faces = face_cc.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=5,
+            minSize=(30, 30),
+            ## TODO research where this is  nowflags=cv2.cv.CV_HAAR_SCALE_IMAGE
+        )
+        # Draw a rectangle around faces
+        for (x, y, w, h) in faces:
+            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    except:
+        raise
 
     return frame
 

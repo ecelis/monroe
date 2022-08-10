@@ -1,8 +1,22 @@
 # monroe
 
+## Setup
+
+Certain files are required. In a linux/mac system make sure to have teh following files in your `$HOME` directory.
+
+**config.ini**
+
+It configures which camera and the XML for the model for face detection.
+
+```
+[DEFAULT]
+facexml=haarcascade_frontalface_default.xml
+camera=0
+```
+
 ## Run
 
-Anaconda is the suggested way. However there a few packages not available and you need to install thos with `pip`.
+Anaconda is the suggested way. However there a few packages not available and you need to install those with `pip`.
 
 ```
 conda create --name monroe
