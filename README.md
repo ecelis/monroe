@@ -1,10 +1,22 @@
 # monroe
 
+## Run
+
+Anaconda is the suggested way. However there a few packages not available and you need to install thos with `pip`.
+
+```
+conda create --name monroe
+conda activate monroe
+conda install --file conda-requirements.txt
+pip install -r requirements.txt
+cd monroe/monroe
+python monroe.py
+```
+
 ## Dependencies
 
 ### Python packages
 
-- Flask
 - numpy
 - opencv-python
 - pyttsx3
@@ -48,22 +60,13 @@ cp opencv/Release/lib/cv.py monroe/ENV/lib/python2.7/site-packages
 Download and install [VLC](https://www.videolan.org), a copy o VLC python
 binding is included along with monroe source code.
 
-
-### Run
-
-```
-pip install -r requirements.txt
-cd monroe/monroe
-python monroe.py
-```
-
 TODO Feed to VLC?
 
 ```
 python monroe.py | cvlc --demux=rawvideo --rawvid-fps=25 \
   --rawvid-width=720 --rawvid-height=480  \
   --rawvid-chroma=RV24 - \
-  --sout "#transcode{vcodec=h264,vb=200,fps=25,width=720,height=480}:rtp{dst=0.0.0.0,port=8081,sdp=rtsp://0.0.0.0:8081/test.sdp}"
+  --sout "#transcode{vcodec=h264,vb=200,fps=25,width=720,height=480}:rtp{dst=0.0.0.0,port=8081,sdp=rtsp://0.0.0.0:8081/test.sdp}" \
 ```
 
 ## Hardware
