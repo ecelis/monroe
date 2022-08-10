@@ -6,7 +6,6 @@ import sys
 
 from cpuinfo import get_cpu_info
 import cv2
-from flask import Flask
 import pyttsx3
 import vlc
 

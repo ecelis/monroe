@@ -1,5 +1,18 @@
 # monroe
 
+## Run
+
+Anaconda is the suggested way. However there a few packages not available and you need to install thos with `pip`.
+
+```
+conda create --name monroe
+conda activate monroe
+conda install --file conda-requirements.txt
+pip install -r requirements.txt
+cd monroe/monroe
+python monroe.py
+```
+
 ## Dependencies
 
 ### Python packages
@@ -47,15 +60,6 @@ cp opencv/Release/lib/cv.py monroe/ENV/lib/python2.7/site-packages
 
 Download and install [VLC](https://www.videolan.org), a copy o VLC python
 binding is included along with monroe source code.
-
-
-### Run
-
-```
-pip install -r requirements.txt
-cd monroe/monroe
-python monroe.py
-```
 
 TODO Feed to VLC?
 
