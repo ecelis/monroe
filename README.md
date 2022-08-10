@@ -17,7 +17,6 @@ python monroe.py
 
 ### Python packages
 
-- Flask
 - numpy
 - opencv-python
 - pyttsx3
@@ -67,7 +66,7 @@ TODO Feed to VLC?
 python monroe.py | cvlc --demux=rawvideo --rawvid-fps=25 \
   --rawvid-width=720 --rawvid-height=480  \
   --rawvid-chroma=RV24 - \
-  --sout "#transcode{vcodec=h264,vb=200,fps=25,width=720,height=480}:rtp{dst=0.0.0.0,port=8081,sdp=rtsp://0.0.0.0:8081/test.sdp}"
+  --sout "#transcode{vcodec=h264,vb=200,fps=25,width=720,height=480}:rtp{dst=0.0.0.0,port=8081,sdp=rtsp://0.0.0.0:8081/test.sdp}" \
 ```
 
 ## Hardware
