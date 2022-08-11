@@ -46,7 +46,6 @@ def initialize():
     os.makedirs(config_dir, exist_ok=True)
     config_file = Path.home().joinpath(config_dir, 'config.ini')
     config_list = config.read(config_file)
-    
     ## Check for the required files to be in place
     if len(config_list) < 1:
         msg = "File %s not found." % config_file
@@ -57,10 +56,8 @@ def initialize():
     if(not Path(face_cc_xml).is_file()):
         msg = "File %s not found!" % face_cc_xml
         raise FileNotFoundError(msg)
-
     ## Load the Face Cascade Classifier model
     face_cc = cv2.CascadeClassifier(face_cc_xml)
-
     ## Initialize camera
     video_capture = cv2.VideoCapture(0)
     
