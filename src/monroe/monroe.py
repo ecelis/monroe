@@ -70,10 +70,7 @@ def initialize():
 def get_frame(face_cc, video_capture):
     """Capture frames from camera"""
     if video_capture.isOpened():
-        success, frame = video_capture.read()
-    else:
-        success = False
-        #stay_alive = success  ## TODO maybe stay_aliv isn't required
+        _, frame = video_capture.read()
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -137,16 +134,15 @@ def jpeg_encode(frame):
 
 def exit(flag, video_capture):
     """Exit the app"""
-    #if (not running):
     video_capture.release()
     cv2.destroyAllWindows()
-    log.info("Bye!")
+    log.info("A mimir!")
     sys.exit(flag)
 
 
 def main():
     """Monroe waits for external sensors input and talks to people"""
-    log.info("Starting")
+    log.info("Waking up!")
     face_cc, video_capture = initialize()
     running = True   # Is the program running?
 
@@ -159,8 +155,7 @@ def main():
         if debug:
             log.debug("KEY: %s" % read_keyboard_input)
         running = listen_signal(read_keyboard_input)
-        log.debug("I run %s" % running)
-    
+        
     exit(0 ,video_capture)
 
 if __name__ == "__main__":
