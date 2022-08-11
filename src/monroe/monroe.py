@@ -123,7 +123,7 @@ def listen_signal(read_keyboard_input):
         # tts_engine.setProperty('voice',
         #     config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
         # tts_engine.setProperty('rate', 95)
-        voice.speak("Hello")
+        voice.speak("Hello", "input-%s" % read_keyboard_input)
         # tts_engine.runAndWait()
         # tts_engine.stop()
             # try:

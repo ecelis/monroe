@@ -38,7 +38,17 @@ class Voice:
         self.tts_engine.setProperty('voice',
             config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
         self.tts_engine.setProperty('rate', 95)
+        self.tts_engine.connect('started-utterance', self.onStart)
+        self.tts_engine.connect('finished-utterance', self.onEnd)
 
-    def speak(self, utterance):
-        self.tts_engine.say(utterance)
-        self.tts_engine.runAndWait()
+    def onStart(self, name):
+        log.debug("Starting utterance: %s" % name)
+
+    def onEnd(self, name, completed):
+        log.debug("Utterance ended: %s as %s" % (name, completed))
+        self.tts_engine.endLoop()
+
+    def speak(self, utterance, name):
+        self.tts_engine.say(utterance, name)
+        self.tts_engine.startLoop()
+        #self.tts_engine.runAndWait()
