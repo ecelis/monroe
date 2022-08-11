@@ -47,6 +47,9 @@ class Voice:
 
     def get_engine(self):
         return self.engine
+    
+    def stop_loop(self):
+        self.engine.endLoop()
 
     def onStart(self, name):
         log.debug("Starting utterance: %s" % name)
@@ -61,5 +64,15 @@ class Voice:
 
     def speak(self, utterance, name):
         self.engine.say(utterance, name)
-        self.engine.startLoop(False)
+        try:
+            self.engine.startLoop(False)
+        except RuntimeError as err:
+            if repr(err) == "RuntimeError('run loop already started')":
+                self.engine.say(utterance, name)
+            else:
+                log.error(repr(err))
+            
+            
+
+        
         

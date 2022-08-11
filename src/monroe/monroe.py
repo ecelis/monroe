@@ -19,7 +19,7 @@ import os
 from pathlib import Path
 import sys
 from threading import Thread
-
+import traceback
 from cpuinfo import get_cpu_info
 import cv2
 
@@ -62,8 +62,10 @@ def initialize():
     face_cc = cv2.CascadeClassifier(face_cc_xml)
     ## Initialize camera
     video_capture = cv2.VideoCapture(0)
+    ## Initialize voice
+    voice = Voice(config)
     
-    return (face_cc, video_capture)
+    return (face_cc, video_capture, voice)
 
 
 def get_frame(face_cc, video_capture):
@@ -90,13 +92,12 @@ def get_frame(face_cc, video_capture):
 
     return frame
 
-def speak(uttering, name):
+def speak(uttering, name, voice):
     async def main(uttering, name):
-        voice = Voice(config)
         try:
             voice.speak(uttering, name)
         except Exception:
-            log.debug("ERROR SPEAK: %s" % Exception)
+            log.debug(traceback.format_exc())
         finally:
             voice.get_engine().iterate()
 
@@ -104,17 +105,18 @@ def speak(uttering, name):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(main(uttering, name))
 
-def listen_signal(read_keyboard_input):
+def listen_signal(read_keyboard_input, voice):
     running = True  ## modify the main running flag in the return
     if (read_keyboard_input == ord('Q')
         or read_keyboard_input == ord('q')
         or read_keyboard_input == ord('/')):
+        speak("Bye!", "input-%s" % read_keyboard_input, voice)
         running = False
     elif read_keyboard_input == ord('.'):
         log.info("Shut up!")
     elif read_keyboard_input == ord('0'):
         log.debug('hello 0')
-        speak("Hello", "input-%s" % read_keyboard_input)
+        speak("Hello", "input-%s" % read_keyboard_input, voice)
     elif read_keyboard_input == ord('1'):
         log.info("How are you?")
     elif read_keyboard_input == ord('2'):
@@ -152,7 +154,8 @@ def exit(flag, video_capture):
 def main():
     """Monroe waits for external sensors input and talks to people"""
     log.info("Waking up!")
-    face_cc, video_capture = initialize()
+    face_cc, video_capture, voice = initialize()
+
     running = True   # Is the program running?
 
     while running:
@@ -163,7 +166,7 @@ def main():
         read_keyboard_input = cv2.waitKey(1) & 0xFF
         if debug:
             log.debug("KEY: %s" % read_keyboard_input)
-        running = listen_signal(read_keyboard_input)
+        running = listen_signal(read_keyboard_input, voice)
         
     exit(0 ,video_capture)
 
