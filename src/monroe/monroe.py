@@ -13,20 +13,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+import asyncio
 import configparser
-import logging
 import os
 from pathlib import Path
 import sys
+from threading import Thread
 
 from cpuinfo import get_cpu_info
 import cv2
-import pyttsx3
 
-if "X86_64" == get_cpu_info()["arch"]:  ## TODO I can't recall why I needed it
-    import getchar as interface
+import logger
+from voice import Voice
 
-config = configparser.ConfigParser()
 
 debug = False
 try:
@@ -34,16 +33,12 @@ try:
 except KeyError:
     pass
 
-logging_level = logging.DEBUG if debug else logging.INFO
-FORMAT = logging.Formatter('%(asctime)-15s %(message)s')
-log = logging.getLogger()
-log.setLevel(logging_level)
-sh = logging.StreamHandler(sys.stdout)
-sh.setFormatter(FORMAT)
-log.addHandler(sh)
-fh = logging.FileHandler(filename=os.environ['HOME'] + "/monroe.log")
-fh.setFormatter(FORMAT)
-log.addHandler(fh)
+log = logger.get(debug)
+
+if "X86_64" == get_cpu_info()["arch"]:  ## TODO I can't recall why I needed it
+    import getchar as interface
+
+config = configparser.ConfigParser()
 
 
 def initialize():
@@ -53,7 +48,6 @@ def initialize():
     os.makedirs(config_dir, exist_ok=True)
     config_file = Path.home().joinpath(config_dir, 'config.ini')
     config_list = config.read(config_file)
-    
     ## Check for the required files to be in place
     if len(config_list) < 1:
         msg = "File %s not found." % config_file
@@ -64,47 +58,18 @@ def initialize():
     if(not Path(face_cc_xml).is_file()):
         msg = "File %s not found!" % face_cc_xml
         raise FileNotFoundError(msg)
-
     ## Load the Face Cascade Classifier model
     face_cc = cv2.CascadeClassifier(face_cc_xml)
-
-    # ## Initialize Text-to-Speech engine
-    # tts_engine = pyttsx3.init()
-    # tts_engine.setProperty('voice',
-    #     config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
-    # tts_engine.setProperty('rate', 95)
-
     ## Initialize camera
     video_capture = cv2.VideoCapture(0)
     
-    # TODO I can't recall why I wanted VLC
-    # # Create basic VLC instance
-    # vlc_instance = vlc.Instance()
-    # # Create VLC player
-    # player = vlc_instance.media_player_new()
-    # # TODO Make it load a playlist and set it up to play random
-    # promos = vlc_instance.media_new("file://"
-    #                                 + os.environ["HOME"] + "/01.ogg")
-    # player.set_media(promos)
     return (face_cc, video_capture)
-
-
-def amIspeaking(speaking):
-    if speaking == True:
-        log.debug("I'am currently talking")
-        return speaking
-    else:
-        speaking = True
-        return False
 
 
 def get_frame(face_cc, video_capture):
     """Capture frames from camera"""
     if video_capture.isOpened():
-        success, frame = video_capture.read()
-    else:
-        success = False
-        #stay_alive = success  ## TODO maybe stay_aliv isn't required
+        _, frame = video_capture.read()
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -125,6 +90,19 @@ def get_frame(face_cc, video_capture):
 
     return frame
 
+def speak(uttering, name):
+    async def main(uttering, name):
+        voice = Voice(config)
+        try:
+            voice.speak(uttering, name)
+        except Exception:
+            log.debug("ERROR SPEAK: %s" % Exception)
+        finally:
+            voice.get_engine().iterate()
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(main(uttering, name))
 
 def listen_signal(read_keyboard_input):
     running = True  ## modify the main running flag in the return
@@ -134,24 +112,9 @@ def listen_signal(read_keyboard_input):
         running = False
     elif read_keyboard_input == ord('.'):
         log.info("Shut up!")
-        #player.stop()
     elif read_keyboard_input == ord('0'):
-        #log.info("Hello %s" % (not tts_engine.isBusy()))
-        #if tts_engine.isBusy():  # TODO use pyttsx3.isBusy()
-         ## Initialize Text-to-Speech engine
         log.debug('hello 0')
-        # tts_engine = pyttsx3.init()
-        # tts_engine.setProperty('voice',
-        #     config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
-        # tts_engine.setProperty('rate', 95)
-        pyttsx3.speak("Hello Ricardo")
-        # tts_engine.runAndWait()
-        # tts_engine.stop()
-            # try:
-            #     tts_engine.runAndWait()
-            # except Exception:
-            #     log.fatal(Exception)
-            #     raise Exception
+        speak("Hello", "input-%s" % read_keyboard_input)
     elif read_keyboard_input == ord('1'):
         log.info("How are you?")
     elif read_keyboard_input == ord('2'):
@@ -173,41 +136,24 @@ def listen_signal(read_keyboard_input):
 
     return running
 
-
 def jpeg_encode(frame):
     success, jpeg = cv2.imencode('.jpg', frame)
 
     return jpeg.tobytes()
 
-
-# def shout_out(snd_file=None):
-#     """Say something"""
-#     if False == amIspeaking():
-#         if (snd_file != None):
-#             speech = vlc_instance.media_new(snd_file)
-#             player.set_media(speech)
-
-#         player.play()
-#         speaking = False
-
-
 def exit(flag, video_capture):
     """Exit the app"""
-    #if (not running):
     video_capture.release()
     cv2.destroyAllWindows()
-    log.info("Bye!")
+    log.info("A mimir!")
     sys.exit(flag)
 
 
 def main():
     """Monroe waits for external sensors input and talks to people"""
-    log.info("Starting")
+    log.info("Waking up!")
     face_cc, video_capture = initialize()
-    #vlc_instance = None
-    #player = None
-    running = True   # Is the program running>
-    speaking = False    # Am I talking when I detect someone else prescence?
+    running = True   # Is the program running?
 
     while running:
         # TODO Feel
@@ -218,9 +164,9 @@ def main():
         if debug:
             log.debug("KEY: %s" % read_keyboard_input)
         running = listen_signal(read_keyboard_input)
-        log.debug("I run %s" % running)
-    
+        
     exit(0 ,video_capture)
 
 if __name__ == "__main__":
+    speak_thread = Thread(target=speak, daemon=True)
     main()
