@@ -64,15 +64,6 @@ def initialize():
     ## Initialize camera
     video_capture = cv2.VideoCapture(0)
     
-    # TODO I can't recall why I wanted VLC
-    # # Create basic VLC instance
-    # vlc_instance = vlc.Instance()
-    # # Create VLC player
-    # player = vlc_instance.media_player_new()
-    # # TODO Make it load a playlist and set it up to play random
-    # promos = vlc_instance.media_new("file://"
-    #                                 + os.environ["HOME"] + "/01.ogg")
-    # player.set_media(promos)
     return (face_cc, video_capture)
 
 
@@ -112,25 +103,10 @@ def listen_signal(read_keyboard_input):
         running = False
     elif read_keyboard_input == ord('.'):
         log.info("Shut up!")
-        #player.stop()
     elif read_keyboard_input == ord('0'):
-        #log.info("Hello %s" % (not tts_engine.isBusy()))
-        #if tts_engine.isBusy():  # TODO use pyttsx3.isBusy()
-         ## Initialize Text-to-Speech engine
         log.debug('hello 0')
         voice = Voice(config)
-        # tts_engine = pyttsx3.init()
-        # tts_engine.setProperty('voice',
-        #     config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
-        # tts_engine.setProperty('rate', 95)
         voice.speak("Hello", "input-%s" % read_keyboard_input)
-        # tts_engine.runAndWait()
-        # tts_engine.stop()
-            # try:
-            #     tts_engine.runAndWait()
-            # except Exception:
-            #     log.fatal(Exception)
-            #     raise Exception
     elif read_keyboard_input == ord('1'):
         log.info("How are you?")
     elif read_keyboard_input == ord('2'):
@@ -159,17 +135,6 @@ def jpeg_encode(frame):
     return jpeg.tobytes()
 
 
-# def shout_out(snd_file=None):
-#     """Say something"""
-#     if False == amIspeaking():
-#         if (snd_file != None):
-#             speech = vlc_instance.media_new(snd_file)
-#             player.set_media(speech)
-
-#         player.play()
-#         speaking = False
-
-
 def exit(flag, video_capture):
     """Exit the app"""
     #if (not running):
@@ -183,8 +148,6 @@ def main():
     """Monroe waits for external sensors input and talks to people"""
     log.info("Starting")
     face_cc, video_capture = initialize()
-    #vlc_instance = None
-    #player = None
     running = True   # Is the program running?
 
     while running:
