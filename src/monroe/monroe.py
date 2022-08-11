@@ -21,7 +21,9 @@ import sys
 
 from cpuinfo import get_cpu_info
 import cv2
-import pyttsx3
+
+from voice import Voice
+
 
 if "X86_64" == get_cpu_info()["arch"]:  ## TODO I can't recall why I needed it
     import getchar as interface
@@ -68,12 +70,6 @@ def initialize():
     ## Load the Face Cascade Classifier model
     face_cc = cv2.CascadeClassifier(face_cc_xml)
 
-    # ## Initialize Text-to-Speech engine
-    # tts_engine = pyttsx3.init()
-    # tts_engine.setProperty('voice',
-    #     config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
-    # tts_engine.setProperty('rate', 95)
-
     ## Initialize camera
     video_capture = cv2.VideoCapture(0)
     
@@ -87,15 +83,6 @@ def initialize():
     #                                 + os.environ["HOME"] + "/01.ogg")
     # player.set_media(promos)
     return (face_cc, video_capture)
-
-
-def amIspeaking(speaking):
-    if speaking == True:
-        log.debug("I'am currently talking")
-        return speaking
-    else:
-        speaking = True
-        return False
 
 
 def get_frame(face_cc, video_capture):
@@ -140,11 +127,12 @@ def listen_signal(read_keyboard_input):
         #if tts_engine.isBusy():  # TODO use pyttsx3.isBusy()
          ## Initialize Text-to-Speech engine
         log.debug('hello 0')
+        voice = Voice(config)
         # tts_engine = pyttsx3.init()
         # tts_engine.setProperty('voice',
         #     config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
         # tts_engine.setProperty('rate', 95)
-        pyttsx3.speak("Hello Ricardo")
+        voice.speak("Hello")
         # tts_engine.runAndWait()
         # tts_engine.stop()
             # try:
