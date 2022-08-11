@@ -26,7 +26,6 @@ import pyttsx3
 if "X86_64" == get_cpu_info()["arch"]:  ## TODO I can't recall why I needed it
     import getchar as interface
 
-
 config = configparser.ConfigParser()
 
 debug = False
@@ -69,11 +68,11 @@ def initialize():
     ## Load the Face Cascade Classifier model
     face_cc = cv2.CascadeClassifier(face_cc_xml)
 
-    ## Initialize Text-to-Speech engine
-    tts_engine = pyttsx3.init()
-    tts_engine.setProperty('voice',
-        config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
-    tts_engine.setProperty('rate', 95)
+    # ## Initialize Text-to-Speech engine
+    # tts_engine = pyttsx3.init()
+    # tts_engine.setProperty('voice',
+    #     config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
+    # tts_engine.setProperty('rate', 95)
 
     ## Initialize camera
     video_capture = cv2.VideoCapture(0)
@@ -87,7 +86,17 @@ def initialize():
     # promos = vlc_instance.media_new("file://"
     #                                 + os.environ["HOME"] + "/01.ogg")
     # player.set_media(promos)
-    return (face_cc, tts_engine, video_capture)
+    return (face_cc, video_capture)
+
+
+def amIspeaking(speaking):
+    if speaking == True:
+        log.debug("I'am currently talking")
+        return speaking
+    else:
+        speaking = True
+        return False
+
 
 def get_frame(face_cc, video_capture):
     """Capture frames from camera"""
@@ -105,7 +114,7 @@ def get_frame(face_cc, video_capture):
             scaleFactor=1.1,
             minNeighbors=5,
             minSize=(30, 30),
-            ## TODO research where this is  nowflags=cv2.cv.CV_HAAR_SCALE_IMAGE
+            ## TODO research where this is now? flags=cv2.cv.CV_HAAR_SCALE_IMAGE
         )
         if debug:
             # Draw a rectangle around faces
@@ -117,16 +126,7 @@ def get_frame(face_cc, video_capture):
     return frame
 
 
-def amIspeaking(speaking):
-    if speaking == True:
-        log.debug("I'am currently talking")
-        return speaking
-    else:
-        speaking = True
-        return False
-
-
-def listen_signal(read_keyboard_input, speaking, tts_engine):
+def listen_signal(read_keyboard_input):
     running = True  ## modify the main running flag in the return
     if (read_keyboard_input == ord('Q')
         or read_keyboard_input == ord('q')
@@ -134,20 +134,44 @@ def listen_signal(read_keyboard_input, speaking, tts_engine):
         running = False
     elif read_keyboard_input == ord('.'):
         log.info("Shut up!")
-        tts_engine.stop()
         #player.stop()
-        speaking = False
+    elif read_keyboard_input == ord('0'):
+        #log.info("Hello %s" % (not tts_engine.isBusy()))
+        #if tts_engine.isBusy():  # TODO use pyttsx3.isBusy()
+         ## Initialize Text-to-Speech engine
+        log.debug('hello 0')
+        # tts_engine = pyttsx3.init()
+        # tts_engine.setProperty('voice',
+        #     config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
+        # tts_engine.setProperty('rate', 95)
+        pyttsx3.speak("Hello Ricardo")
+        # tts_engine.runAndWait()
+        # tts_engine.stop()
+            # try:
+            #     tts_engine.runAndWait()
+            # except Exception:
+            #     log.fatal(Exception)
+            #     raise Exception
     elif read_keyboard_input == ord('1'):
-        log.info("Shout out!")
-        #shout_out()
+        log.info("How are you?")
     elif read_keyboard_input == ord('2'):
-        log.info("Say something")
-        if False == amIspeaking():
-            tts_engine.say("Hola mundo!")
-            tts_engine.runAndWait()
-            speaking = False
+        log.info("Good morning")
+    elif read_keyboard_input == ord('3'):
+        log.info("Good afternoon")
+    elif read_keyboard_input == ord('4'):
+        log.info("Good night")
+    elif read_keyboard_input == ord('5'):
+        log.info("Good bye")
+    elif read_keyboard_input == ord('6'):
+        log.info("Thank you")
+    elif read_keyboard_input == ord('7'):
+        log.info("Please")
+    elif read_keyboard_input == ord('8'):
+        log.info("You are welcome")
+    elif read_keyboard_input == ord('9'):
+        log.info("Excuse me")
 
-    return (running, speaking)
+    return running
 
 
 def jpeg_encode(frame):
@@ -177,9 +201,9 @@ def exit(flag, video_capture):
 
 
 def main():
-    """Monroe waits for external sensors input and greet people"""
+    """Monroe waits for external sensors input and talks to people"""
     log.info("Starting")
-    face_cc, tts_engine, video_capture = initialize()
+    face_cc, video_capture = initialize()
     #vlc_instance = None
     #player = None
     running = True   # Is the program running>
@@ -193,8 +217,8 @@ def main():
         read_keyboard_input = cv2.waitKey(1) & 0xFF
         if debug:
             log.debug("KEY: %s" % read_keyboard_input)
-        running, speaking = listen_signal(read_keyboard_input, speaking,
-            tts_engine)
+        running = listen_signal(read_keyboard_input)
+        log.debug("I run %s" % running)
     
     exit(0 ,video_capture)
 
