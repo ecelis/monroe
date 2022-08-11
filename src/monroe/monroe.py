@@ -22,30 +22,33 @@ import sys
 from cpuinfo import get_cpu_info
 import cv2
 import pyttsx3
-import vlc
 
 if "X86_64" == get_cpu_info()["arch"]:  ## TODO I can't recall why I needed it
     import getchar as interface
 
 
 config = configparser.ConfigParser()
-tts_engine = None
-face_cc = None
-video = None
-vlc_instance = None
-player = None
-stay_alive = True   # Keep the program running?
-speaking = False    # Am I talking when I detect someone else prescence
+
+debug = False
+try:
+    debug = True if os.environ["DEBUG"] else False
+except KeyError:
+    pass
+
+logging_level = logging.DEBUG if debug else logging.INFO
+FORMAT = logging.Formatter('%(asctime)-15s %(message)s')
+log = logging.getLogger()
+log.setLevel(logging_level)
+sh = logging.StreamHandler(sys.stdout)
+sh.setFormatter(FORMAT)
+log.addHandler(sh)
+fh = logging.FileHandler(filename=os.environ['HOME'] + "/monroe.log")
+fh.setFormatter(FORMAT)
+log.addHandler(fh)
 
 
 def initialize():
     """Initialize program"""
-    global video
-    global vlc_instance
-    global tts_engine
-    global player
-    global face_cc
-
     ## Initialize ~/.config/monroe
     config_dir = str(Path.home().joinpath('.config', 'monroe'))
     os.makedirs(config_dir, exist_ok=True)
@@ -54,11 +57,14 @@ def initialize():
     
     ## Check for the required files to be in place
     if len(config_list) < 1:
-        raise Exception("File %s not found." % config_file)
+        msg = "File %s not found." % config_file
+        log.critical(msg)
+        raise Exception(msg)
     face_cc_xml = str(Path.home().joinpath(config_dir,
         config.get('DEFAULT', 'facexml')))
     if(not Path(face_cc_xml).is_file()):
-        raise FileNotFoundError("File %s not found!" % face_cc_xml)
+        msg = "File %s not found!" % face_cc_xml
+        raise FileNotFoundError(msg)
 
     ## Load the Face Cascade Classifier model
     face_cc = cv2.CascadeClassifier(face_cc_xml)
@@ -70,7 +76,7 @@ def initialize():
     tts_engine.setProperty('rate', 95)
 
     ## Initialize camera
-    video = cv2.VideoCapture(0)
+    video_capture = cv2.VideoCapture(0)
     
     # TODO I can't recall why I wanted VLC
     # # Create basic VLC instance
@@ -81,15 +87,15 @@ def initialize():
     # promos = vlc_instance.media_new("file://"
     #                                 + os.environ["HOME"] + "/01.ogg")
     # player.set_media(promos)
+    return (face_cc, tts_engine, video_capture)
 
-
-def get_frame():
+def get_frame(face_cc, video_capture):
     """Capture frames from camera"""
-    if video.isOpened():
-        success, frame = video.read()
+    if video_capture.isOpened():
+        success, frame = video_capture.read()
     else:
         success = False
-        stay_alive = success  ## TODO maybe stay_aliv isn't required
+        #stay_alive = success  ## TODO maybe stay_aliv isn't required
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -101,64 +107,53 @@ def get_frame():
             minSize=(30, 30),
             ## TODO research where this is  nowflags=cv2.cv.CV_HAAR_SCALE_IMAGE
         )
-        # Draw a rectangle around faces
-        for (x, y, w, h) in faces:
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        if debug:
+            # Draw a rectangle around faces
+            for (x, y, w, h) in faces:
+                cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
     except:
         raise
 
     return frame
 
 
-def jpeg_encode(frame):
-    success, jpeg = cv2.imencode('.jpg', frame)
-
-    return jpeg.tobytes()
-
-
-def main():
-    """Monroe waits for external sensors input and greet people"""
-    global speaking
-    global stay_alive
-    log_init()                      # Initialize loging system
-    logging.info("Starting")
-    initialize()                    # Initilize global variables
-    # read = interface.read_input() TODO replace it for something else
-
-    while stay_alive:
-        # Feel
-        # Watch
-        cv2.imshow('Video', get_frame())
-        # Wait for input, TODO make it more generic loose from cv2
-        r_input = cv2.waitKey(1) & 0xFF
-        if r_input == ord('/'):
-            stay_alive = False
-            exit(stay_alive)
-            break
-        elif r_input == ord('.'):
-            logging.info("Shut up!")
-            tts_engine.stop()
-            player.stop()
-            speaking = False
-        elif r_input == ord('1'):
-            logging.info("Shout out!")
-            #shout_out()
-        elif r_input == ord('2'):
-            logging.info("Say something")
-            if False == amIspeaking():
-                tts_engine.say("Hola mundo!")
-                tts_engine.runAndWait()
-                speaking = False
-
-
-def amIspeaking():
-    global speaking
+def amIspeaking(speaking):
     if speaking == True:
-        logging.info("I'am currently talking")
+        log.debug("I'am currently talking")
         return speaking
     else:
         speaking = True
         return False
+
+
+def listen_signal(read_keyboard_input, speaking, tts_engine):
+    running = True  ## modify the main running flag in the return
+    if (read_keyboard_input == ord('Q')
+        or read_keyboard_input == ord('q')
+        or read_keyboard_input == ord('/')):
+        running = False
+    elif read_keyboard_input == ord('.'):
+        log.info("Shut up!")
+        tts_engine.stop()
+        #player.stop()
+        speaking = False
+    elif read_keyboard_input == ord('1'):
+        log.info("Shout out!")
+        #shout_out()
+    elif read_keyboard_input == ord('2'):
+        log.info("Say something")
+        if False == amIspeaking():
+            tts_engine.say("Hola mundo!")
+            tts_engine.runAndWait()
+            speaking = False
+
+    return (running, speaking)
+
+
+def jpeg_encode(frame):
+    success, jpeg = cv2.imencode('.jpg', frame)
+
+    return jpeg.tobytes()
 
 
 # def shout_out(snd_file=None):
@@ -172,22 +167,36 @@ def amIspeaking():
 #         speaking = False
 
 
-def exit(flag):
+def exit(flag, video_capture):
     """Exit the app"""
-    if (stay_alive != True):
-        video.release()
-        cv2.destroyAllWindows()
-        logging.info("Bye!")
-        sys.exit(0)
+    #if (not running):
+    video_capture.release()
+    cv2.destroyAllWindows()
+    log.info("Bye!")
+    sys.exit(flag)
 
 
-def log_init():
-    """Initialize log"""
-    FORMAT = '%(asctime)-15s %(message)s'
-    logging.basicConfig(filename=os.environ['HOME'] + "/monroe.log",
-                        level=logging.DEBUG,
-                        format=FORMAT)
+def main():
+    """Monroe waits for external sensors input and greet people"""
+    log.info("Starting")
+    face_cc, tts_engine, video_capture = initialize()
+    #vlc_instance = None
+    #player = None
+    running = True   # Is the program running>
+    speaking = False    # Am I talking when I detect someone else prescence?
 
+    while running:
+        # TODO Feel
+        # Watch
+        cv2.imshow('Video', get_frame(face_cc, video_capture))
+        # Wait for input, TODO make it more generic loose from cv2
+        read_keyboard_input = cv2.waitKey(1) & 0xFF
+        if debug:
+            log.debug("KEY: %s" % read_keyboard_input)
+        running, speaking = listen_signal(read_keyboard_input, speaking,
+            tts_engine)
+    
+    exit(0 ,video_capture)
 
 if __name__ == "__main__":
     main()
