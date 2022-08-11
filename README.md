@@ -1,15 +1,47 @@
 # monroe
 
+## Setup
+
+Certain files are required. In a linux/mac system make sure to have teh following files in your `$HOME` directory.
+
+**config.ini**
+
+It configures which camera and the XML for the model for face detection.
+
+- **camera** if you have more than one camera connected, change the index. Right
+  now it is trial and error to find out.
+- **voice** pyttysx3 voices, run the snippet below to find out which voices are
+  available in your system.
+- **facexml**, probably you won't need to change it. Face Cascade Clasification
+  model
+
+```ini
+[DEFAULT]
+camera=0
+voice=spanish-latin-am
+facexml=haarcascade_frontalface_default.xml
+```
+
+Get available voices in `pyttsx3`
+
+```python
+import pyttsx3
+engine = pyttsx3.init()
+voices = engine.getProperty('voices')
+for voice in voices:
+  print(voice.id)
+```
+
 ## Run
 
-Anaconda is the suggested way. However there a few packages not available and you need to install thos with `pip`.
+Anaconda is the suggested way. However there a few packages not available and you need to install those with `pip`.
 
 ```
 conda create --name monroe
 conda activate monroe
 conda install --file conda-requirements.txt
 pip install -r requirements.txt
-cd monroe/monroe
+cd monroe/src/monroe
 python monroe.py
 ```
 
