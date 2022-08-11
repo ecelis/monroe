@@ -13,10 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+import asyncio
 import configparser
 import os
 from pathlib import Path
 import sys
+from threading import Thread
 
 from cpuinfo import get_cpu_info
 import cv2
@@ -88,6 +90,19 @@ def get_frame(face_cc, video_capture):
 
     return frame
 
+def speak(uttering, name):
+    async def main(uttering, name):
+        voice = Voice(config)
+        try:
+            voice.speak(uttering, name)
+        except Exception:
+            log.debug("ERROR SPEAK: %s" % Exception)
+        finally:
+            voice.get_engine().iterate()
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(main(uttering, name))
 
 def listen_signal(read_keyboard_input):
     running = True  ## modify the main running flag in the return
@@ -99,8 +114,7 @@ def listen_signal(read_keyboard_input):
         log.info("Shut up!")
     elif read_keyboard_input == ord('0'):
         log.debug('hello 0')
-        voice = Voice(config)
-        voice.speak("Hello", "input-%s" % read_keyboard_input)
+        speak("Hello", "input-%s" % read_keyboard_input)
     elif read_keyboard_input == ord('1'):
         log.info("How are you?")
     elif read_keyboard_input == ord('2'):
@@ -122,12 +136,10 @@ def listen_signal(read_keyboard_input):
 
     return running
 
-
 def jpeg_encode(frame):
     success, jpeg = cv2.imencode('.jpg', frame)
 
     return jpeg.tobytes()
-
 
 def exit(flag, video_capture):
     """Exit the app"""
@@ -156,4 +168,5 @@ def main():
     exit(0 ,video_capture)
 
 if __name__ == "__main__":
+    speak_thread = Thread(target=speak, daemon=True)
     main()

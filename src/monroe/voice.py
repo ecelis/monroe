@@ -15,8 +15,6 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 import os
-from pathlib import Path
-import sys
 
 import pyttsx3
 
@@ -32,23 +30,35 @@ log = logger.get(debug)
 
 
 class Voice:
+    def __new__(cls, config):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(Voice, cls).__new__(cls)
+        return cls.instance
+
     def __init__(self, config):
         log.debug("TTS engine start")
-        self.tts_engine = pyttsx3.init()
-        self.tts_engine.setProperty('voice',
+        self.engine = pyttsx3.init()
+        self.engine.setProperty('voice',
             config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
-        self.tts_engine.setProperty('rate', 95)
-        self.tts_engine.connect('started-utterance', self.onStart)
-        self.tts_engine.connect('finished-utterance', self.onEnd)
+        self.engine.setProperty('rate', 95)
+        self.engine.connect('started-utterance', self.onStart)
+        self.engine.connect('finished-utterance', self.onEnd)
+        self.engine.connect('error', self.onError)
+
+    def get_engine(self):
+        return self.engine
 
     def onStart(self, name):
         log.debug("Starting utterance: %s" % name)
 
     def onEnd(self, name, completed):
         log.debug("Utterance ended: %s as %s" % (name, completed))
-        self.tts_engine.endLoop()
+        self.engine.endLoop()
+
+    def onError(self, name, exception):
+        log.error("TTS ERROR: %s %s"  % (name, exception) )
 
     def speak(self, utterance, name):
-        self.tts_engine.say(utterance, name)
-        self.tts_engine.startLoop()
-        #self.tts_engine.runAndWait()
+        self.engine.say(utterance, name)
+        self.engine.startLoop(False)
+        
