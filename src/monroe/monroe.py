@@ -68,7 +68,7 @@ def initialize():
     return (face_cc, video_capture, voice)
 
 
-def get_frame(face_cc, video_capture):
+def get_frame(face_cc, video_capture, voice):
     """Capture frames from camera"""
     if video_capture.isOpened():
         _, frame = video_capture.read()
@@ -96,8 +96,8 @@ def speak(uttering, name, voice):
     async def main(uttering, name):
         try:
             voice.speak(uttering, name)
-        except Exception:
-            log.debug(traceback.format_exc())
+        except Exception as err:
+            log.debug(repr(err))
         finally:
             voice.get_engine().iterate()
 
@@ -161,7 +161,7 @@ def main():
     while running:
         # TODO Feel
         # Watch
-        cv2.imshow('Video', get_frame(face_cc, video_capture))
+        cv2.imshow('Video', get_frame(face_cc, video_capture, voice))
         # Wait for input, TODO make it more generic loose from cv2
         read_keyboard_input = cv2.waitKey(1) & 0xFF
         if debug:
