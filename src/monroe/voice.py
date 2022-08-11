@@ -57,6 +57,7 @@ class Voice:
 
     def onError(self, name, exception):
         log.error("TTS ERROR: %s %s"  % (name, exception) )
+        self.engine.endLoop()
 
     def speak(self, utterance, name):
         self.engine.say(utterance, name)
