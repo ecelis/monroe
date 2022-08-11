@@ -14,31 +14,20 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License."""
 
+import logging
 import os
-from pathlib import Path
 import sys
 
-import pyttsx3
 
-import logger
-
-debug = False
-try:
-    debug = True if os.environ["DEBUG"] else False
-except KeyError:
-    pass
-
-log = logger.get(debug)
-
-
-class Voice:
-    def __init__(self, config):
-        log.debug("TTS engine start")
-        self.tts_engine = pyttsx3.init()
-        self.tts_engine.setProperty('voice',
-            config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
-        self.tts_engine.setProperty('rate', 95)
-
-    def speak(self, utterance):
-        self.tts_engine.say(utterance)
-        self.tts_engine.runAndWait()
+def get(debug=False):
+    logging_level = logging.DEBUG if debug else logging.INFO
+    FORMAT = logging.Formatter('%(asctime)-15s %(message)s')
+    log = logging.getLogger()
+    log.setLevel(logging_level)
+    sh = logging.StreamHandler(sys.stdout)
+    sh.setFormatter(FORMAT)
+    log.addHandler(sh)
+    fh = logging.FileHandler(filename=os.environ['HOME'] + "/monroe.log")
+    fh.setFormatter(FORMAT)
+    log.addHandler(fh)
+    return log

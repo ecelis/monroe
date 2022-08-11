@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License."""
 
 import configparser
-import logging
 import os
 from pathlib import Path
 import sys
@@ -22,13 +21,9 @@ import sys
 from cpuinfo import get_cpu_info
 import cv2
 
+import logger
 from voice import Voice
 
-
-if "X86_64" == get_cpu_info()["arch"]:  ## TODO I can't recall why I needed it
-    import getchar as interface
-
-config = configparser.ConfigParser()
 
 debug = False
 try:
@@ -36,16 +31,12 @@ try:
 except KeyError:
     pass
 
-logging_level = logging.DEBUG if debug else logging.INFO
-FORMAT = logging.Formatter('%(asctime)-15s %(message)s')
-log = logging.getLogger()
-log.setLevel(logging_level)
-sh = logging.StreamHandler(sys.stdout)
-sh.setFormatter(FORMAT)
-log.addHandler(sh)
-fh = logging.FileHandler(filename=os.environ['HOME'] + "/monroe.log")
-fh.setFormatter(FORMAT)
-log.addHandler(fh)
+log = logger.get(debug)
+
+if "X86_64" == get_cpu_info()["arch"]:  ## TODO I can't recall why I needed it
+    import getchar as interface
+
+config = configparser.ConfigParser()
 
 
 def initialize():
@@ -194,8 +185,7 @@ def main():
     face_cc, video_capture = initialize()
     #vlc_instance = None
     #player = None
-    running = True   # Is the program running>
-    speaking = False    # Am I talking when I detect someone else prescence?
+    running = True   # Is the program running?
 
     while running:
         # TODO Feel
