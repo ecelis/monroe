@@ -40,13 +40,16 @@ class Voice:
         self.engine = pyttsx3.init()
         self.engine.setProperty('voice',
             config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
-        self.engine.setProperty('rate', 95)
+        #self.engine.setProperty('rate', 95)
         self.engine.connect('started-utterance', self.onStart)
         self.engine.connect('finished-utterance', self.onEnd)
         self.engine.connect('error', self.onError)
 
     def get_engine(self):
         return self.engine
+    
+    def stop_loop(self):
+        self.engine.endLoop()
 
     def onStart(self, name):
         log.debug("Starting utterance: %s" % name)
@@ -57,8 +60,19 @@ class Voice:
 
     def onError(self, name, exception):
         log.error("TTS ERROR: %s %s"  % (name, exception) )
+        self.engine.endLoop()
 
     def speak(self, utterance, name):
         self.engine.say(utterance, name)
-        self.engine.startLoop(False)
+        try:
+            self.engine.startLoop(False)
+        except RuntimeError as err:
+            if repr(err) == "RuntimeError('run loop already started')":
+                self.engine.say(utterance, name)
+            else:
+                log.error(repr(err))
+            
+            
+
+        
         

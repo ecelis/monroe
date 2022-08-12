@@ -19,6 +19,7 @@ import os
 from pathlib import Path
 import sys
 from threading import Thread
+from time import sleep
 
 from cpuinfo import get_cpu_info
 import cv2
@@ -62,11 +63,13 @@ def initialize():
     face_cc = cv2.CascadeClassifier(face_cc_xml)
     ## Initialize camera
     video_capture = cv2.VideoCapture(0)
+    ## Initialize voice
+    voice = Voice(config)
     
-    return (face_cc, video_capture)
+    return (face_cc, video_capture, voice)
 
 
-def get_frame(face_cc, video_capture):
+def get_frame(face_cc, video_capture, voice):
     """Capture frames from camera"""
     if video_capture.isOpened():
         _, frame = video_capture.read()
@@ -81,6 +84,7 @@ def get_frame(face_cc, video_capture):
             minSize=(30, 30),
             ## TODO research where this is now? flags=cv2.cv.CV_HAAR_SCALE_IMAGE
         )
+
         if debug:
             # Draw a rectangle around faces
             for (x, y, w, h) in faces:
@@ -88,15 +92,14 @@ def get_frame(face_cc, video_capture):
     except:
         raise
 
-    return frame
+    return frame, faces
 
-def speak(uttering, name):
+def speak(uttering, name, voice):
     async def main(uttering, name):
-        voice = Voice(config)
         try:
             voice.speak(uttering, name)
-        except Exception:
-            log.debug("ERROR SPEAK: %s" % Exception)
+        except Exception as err:
+            log.debug(repr(err))
         finally:
             voice.get_engine().iterate()
 
@@ -104,17 +107,19 @@ def speak(uttering, name):
     asyncio.set_event_loop(loop)
     loop.run_until_complete(main(uttering, name))
 
-def listen_signal(read_keyboard_input):
+def listen_signal(read_keyboard_input, voice):
     running = True  ## modify the main running flag in the return
     if (read_keyboard_input == ord('Q')
         or read_keyboard_input == ord('q')
         or read_keyboard_input == ord('/')):
+        speak("Good bye", "input-%s" % read_keyboard_input, voice)
+        sleep(1)
         running = False
     elif read_keyboard_input == ord('.'):
         log.info("Shut up!")
     elif read_keyboard_input == ord('0'):
         log.debug('hello 0')
-        speak("Hello", "input-%s" % read_keyboard_input)
+        speak("Hello", "input-%s" % read_keyboard_input, voice)
     elif read_keyboard_input == ord('1'):
         log.info("How are you?")
     elif read_keyboard_input == ord('2'):
@@ -152,18 +157,49 @@ def exit(flag, video_capture):
 def main():
     """Monroe waits for external sensors input and talks to people"""
     log.info("Waking up!")
-    face_cc, video_capture = initialize()
+    face_cc, video_capture, voice = initialize()
+
     running = True   # Is the program running?
 
+    seen = None
+    counter = 0
     while running:
         # TODO Feel
         # Watch
-        cv2.imshow('Video', get_frame(face_cc, video_capture))
+        frame, faces = get_frame(face_cc, video_capture, voice)
+        counter += 1
+        log.debug(repr(faces))
+        if seen is None:
+            seen = faces
+        cv2.imshow('Video', frame)
         # Wait for input, TODO make it more generic loose from cv2
         read_keyboard_input = cv2.waitKey(1) & 0xFF
         if debug:
             log.debug("KEY: %s" % read_keyboard_input)
-        running = listen_signal(read_keyboard_input)
+        running = listen_signal(read_keyboard_input, voice)
+        # Do something with faces detected in a given frame
+        if counter % 9 == 0:  ## Skip some frames
+            log.debug(len(faces))
+            if len(faces) > 0 and len(seen) > 0:
+                log.debug("vustos")
+                log.debug(seen)
+                log.debug("nuevos")
+                log.debug(faces)
+                idx = 0
+                for f in faces:
+                    log.debug("face %i" % idx)
+                    log.debug(f)
+                    try:
+                        if not len(seen) < idx or not len(faces) < idx:
+                            if (seen[idx] & faces[idx]).any():
+                                sleep(1)
+                                speak(("Hello person %i" % idx), "greet-person", voice)
+                    except IndexError as err:
+                        log.error(err)
+                    finally:
+                        voice.get_engine().iterate()
+                    idx += 1
+        
         
     exit(0 ,video_capture)
 
