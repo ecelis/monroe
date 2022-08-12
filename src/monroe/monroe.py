@@ -19,7 +19,8 @@ import os
 from pathlib import Path
 import sys
 from threading import Thread
-import traceback
+from time import sleep
+
 from cpuinfo import get_cpu_info
 import cv2
 
@@ -83,6 +84,7 @@ def get_frame(face_cc, video_capture, voice):
             minSize=(30, 30),
             ## TODO research where this is now? flags=cv2.cv.CV_HAAR_SCALE_IMAGE
         )
+
         if debug:
             # Draw a rectangle around faces
             for (x, y, w, h) in faces:
@@ -90,7 +92,7 @@ def get_frame(face_cc, video_capture, voice):
     except:
         raise
 
-    return frame
+    return frame, faces
 
 def speak(uttering, name, voice):
     async def main(uttering, name):
@@ -110,7 +112,8 @@ def listen_signal(read_keyboard_input, voice):
     if (read_keyboard_input == ord('Q')
         or read_keyboard_input == ord('q')
         or read_keyboard_input == ord('/')):
-        speak("Bye!", "input-%s" % read_keyboard_input, voice)
+        speak("Good bye", "input-%s" % read_keyboard_input, voice)
+        sleep(1)
         running = False
     elif read_keyboard_input == ord('.'):
         log.info("Shut up!")
@@ -158,15 +161,45 @@ def main():
 
     running = True   # Is the program running?
 
+    seen = None
+    counter = 0
     while running:
         # TODO Feel
         # Watch
-        cv2.imshow('Video', get_frame(face_cc, video_capture, voice))
+        frame, faces = get_frame(face_cc, video_capture, voice)
+        counter += 1
+        log.debug(repr(faces))
+        if seen is None:
+            seen = faces
+        cv2.imshow('Video', frame)
         # Wait for input, TODO make it more generic loose from cv2
         read_keyboard_input = cv2.waitKey(1) & 0xFF
         if debug:
             log.debug("KEY: %s" % read_keyboard_input)
         running = listen_signal(read_keyboard_input, voice)
+        # Do something with faces detected in a given frame
+        if counter % 9 == 0:  ## Skip some frames
+            log.debug(len(faces))
+            if len(faces) > 0 and len(seen) > 0:
+                log.debug("vustos")
+                log.debug(seen)
+                log.debug("nuevos")
+                log.debug(faces)
+                idx = 0
+                for f in faces:
+                    log.debug("face %i" % idx)
+                    log.debug(f)
+                    try:
+                        if not len(seen) < idx or not len(faces) < idx:
+                            if (seen[idx] & faces[idx]).any():
+                                sleep(1)
+                                speak(("Hello person %i" % idx), "greet-person", voice)
+                    except IndexError as err:
+                        log.error(err)
+                    finally:
+                        voice.get_engine().iterate()
+                    idx += 1
+        
         
     exit(0 ,video_capture)
 

@@ -40,7 +40,7 @@ class Voice:
         self.engine = pyttsx3.init()
         self.engine.setProperty('voice',
             config.get('DEFAULT', 'voice', fallback='spanish-latin-am'))
-        self.engine.setProperty('rate', 95)
+        #self.engine.setProperty('rate', 95)
         self.engine.connect('started-utterance', self.onStart)
         self.engine.connect('finished-utterance', self.onEnd)
         self.engine.connect('error', self.onError)
